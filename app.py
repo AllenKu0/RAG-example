@@ -2,13 +2,16 @@ from qdrant_client import QdrantClient, models
 from qdrant_client.models import *
 from sentence_transformers import SentenceTransformer
 
+# Qdrant Client
 client = QdrantClient("http://localhost:6333")
 
+# 新建向量資料庫
 client.create_collection(
     collection_name="Health_Tips",
     vectors_config=VectorParams(size=384, distance=Distance.COSINE),
 )
 
+# RAG文本
 text = [
     "保持良好的手部衛生是預防感染的重要措施，經常用肥皂和清水洗手。",
     "定期接種疫苗可以預防多種傳染病，保護自己和他人的健康。",
@@ -21,9 +24,14 @@ text = [
     "定期檢查血壓，保持血壓在正常範圍內，可以減少心血管疾病的風險。",
     "保持適當的體重，減少肥胖相關的健康問題，如糖尿病和高血壓。"
 ]
+
+# Embeded Model
 model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
-# embeded text
+
+# 將資料向量化
 embeded_text = model.encode(text)
+
+# 儲存向量資料
 client.upsert(
     collection_name="Health_Tips",
     points=[
@@ -32,10 +40,14 @@ client.upsert(
     ]
 )
 
+# 測試，發出問題
 search_text = "能不能給我一些運動的建議？"
+# 檢索生成
 search_results = client.search(
     collection_name="Health_Tips",
     query_vector=model.encode([search_text])[0],
     limit=1
 )
+
+# print 出結果
 print(search_results[0].payload["document"])
